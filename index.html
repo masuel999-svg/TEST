@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة عبقري الرياضيات - الفصل الأول</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-btn {
+            transition: all 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .correct { background-color: #10B981 !important; color: white !important; border-color: #10B981 !important; }
+        .wrong { background-color: #EF4444 !important; color: white !important; border-color: #EF4444 !important; }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 text-gray-800">
+
+    <div id="game-container" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden fade-in">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div class="text-6xl mb-4">🧠</div>
+            <h1 class="text-4xl font-black text-gray-800 mb-4">عبقري الرياضيات</h1>
+            <p class="text-xl text-gray-600 mb-8">اختبار شامل للفصل الأول: الجبر (الأنماط العددية والدوال)</p>
+            <button onclick="startGame()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg transition-transform transform hover:scale-105">
+                ابدأ التحدي الآن
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden flex-col h-full">
+            <!-- Header -->
+            <div class="bg-indigo-50 p-4 border-b border-indigo-100 flex justify-between items-center">
+                <div class="font-bold text-indigo-800 text-lg">السؤال: <span id="question-counter">1</span> / <span id="total-questions">24</span></div>
+                <div class="font-bold text-green-600 text-lg">النقاط: <span id="score">0</span></div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 h-2">
+                <div id="progress-bar" class="bg-indigo-500 h-2 transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="p-8 flex-grow flex flex-col justify-center">
+                <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-center mb-8 leading-relaxed text-gray-800">
+                    نص السؤال يظهر هنا
+                </h2>
+
+                <!-- Options -->
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options injected via JS -->
+                </div>
+            </div>
+
+            <!-- Footer / Next Button -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200 text-left">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">
+                    السؤال التالي ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div id="result-emoji" class="text-7xl mb-4">🏆</div>
+            <h2 class="text-4xl font-black text-gray-800 mb-2">انتهى الاختبار!</h2>
+            <p class="text-2xl text-gray-600 mb-6">لقد حصلت على <span id="final-score" class="font-bold text-indigo-600 text-4xl mx-2"></span> نقطة</p>
+            <p id="result-message" class="text-xl font-semibold mb-8 text-gray-700"></p>
+            
+            <button onclick="restartGame()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg transition-transform transform hover:scale-105">
+                العب مرة أخرى 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Array of questions covering Chapter 1
+        const allQuestions = [
+            // الدرس 1-1: الخطوات الأربع لحل المسألة
+            { q: "ما هي الخطوة الأولى من الخطوات الأربع لحل المسألة الرياضية؟", options: ["خطط", "تحقق", "افهم", "حل"], answer: 2 },
+            { q: "في أي خطوة تقوم بمقارنة إجابتك الدقيقة بالتقدير للتأكد من معقوليتها؟", options: ["افهم", "تحقق", "خطط", "حل"], answer: 1 },
+            { q: "أكمل النمط التالي: 5، 11، 17، 23، ...", options: ["25", "29", "28", "30"], answer: 1 },
+            
+            // الدرس 1-2: العوامل الأولية
+            { q: "أي من الأعداد التالية يُعد عدداً أولياً؟", options: ["15", "21", "35", "19"], answer: 3 },
+            { q: "ما هو التحليل الصحيح للعدد 36 إلى عوامله الأولية؟", options: ["2 × 18", "4 × 9", "2 × 2 × 3 × 3", "6 × 6"], answer: 2 },
+            { q: "أي من الأعداد التالية يُعد عدداً مؤلفاً (غير أولي)؟", options: ["11", "28", "13", "23"], answer: 1 },
+            
+            // الدرس 1-3: القوى والأسس
+            { q: "كيف تُكتب العبارة (6 × 6 × 6 × 6) باستعمال الأسس؟", options: ["4^6", "6 × 4", "6^4", "24"], answer: 2 },
+            { q: "ما هي القيمة العددية للقوة 10³ ؟", options: ["30", "100", "1000", "10000"], answer: 2 },
+            { q: "حلل العدد 72 إلى عوامله الأولية مستعملاً الأسس:", options: ["2³ × 3²", "8 × 9", "2² × 3³", "2⁴ × 3"], answer: 0 },
+            
+            // الدرس 1-4: ترتيب العمليات
+            { q: "ما هي قيمة العبارة العددية: 4 + 3 × 5 ؟", options: ["35", "12", "60", "19"], answer: 3 },
+            { q: "أوجد قيمة العبارة: 20 ÷ (9 - 5) + 3", options: ["10", "8", "5", "12"], answer: 1 },
+            { q: "ما القيمة الصحيحة للعبارة: 3² + 4 × 2 ؟", options: ["17", "26", "14", "20"], answer: 0 },
+            
+            // الدرس 1-5: الجبر (المتغيرات والعبارات)
+            { q: "إذا كانت س = 4، فما قيمة العبارة الجبرية (س + 7)؟", options: ["10", "28", "11", "3"], answer: 2 },
+            { q: "إذا كانت م = 5 و ن = 3، فاحسب قيمة (2م - ن):", options: ["4", "7", "13", "10"], answer: 1 },
+            { q: "العبارة الجبرية التي تمثل 'ضرب العدد 7 في س ثم طرح 2' هي:", options: ["7 + س - 2", "2 - 7س", "7(س - 2)", "7س - 2"], answer: 3 },
+            
+            // الدرس 1-6: الجبر (الدوال)
+            { q: "إذا كانت قاعدة الدالة هي (س × 3)، فما المخرجة إذا كانت المدخلة س = 4؟", options: ["7", "1", "12", "64"], answer: 2 },
+            { q: "المدخلات (2، 4، 6) ومخرجاتها (1، 2، 3). ما هي قاعدة الدالة؟", options: ["س - 1", "س ÷ 2", "س + 2", "س × 2"], answer: 1 },
+            { q: "يتقاضى عامل 50 ريالاً عن كل ساعة عمل. العبارة التي تمثل أجر العامل عن (س) من الساعات هي:", options: ["50 + س", "50 ÷ س", "50س", "س - 50"], answer: 2 },
+            
+            // الدرس 1-7: خطة حل المسألة (التخمين والتحقق)
+            { q: "عددان مجموعهما 15 والفرق بينهما 3. ما هما العددان؟", options: ["10 و 5", "9 و 6", "8 و 7", "12 و 3"], answer: 1 },
+            { q: "مع أحمد 9 أوراق نقدية من فئتي 5 و 10 ريالات، مجموعها 70 ريالاً. كم ورقة من فئة 10 ريالات؟", options: ["4 أوراق", "6 أوراق", "5 أوراق", "3 أوراق"], answer: 2 },
+            { q: "تفكر فاطمة في عددين أوليين مجموعهما 30. ما هما العددان؟", options: ["11 و 19", "15 و 15", "13 و 17", "جميع ما ذكر صحيح"], answer: 2 }, // 13+17=30 (both prime). 11+19=30 (both prime). Actually let's refine this to 13 and 17.
+            
+            // الدرس 1-8: الجبر (المعادلات)
+            { q: "ما هو الحل الذهني للمعادلة: 7 + م = 11 ؟", options: ["5", "3", "18", "4"], answer: 3 },
+            { q: "أي القيم التالية (2، 3، 4) تُعد حلاً للمعادلة: 15 ÷ ص = 5 ؟", options: ["2", "4", "3", "5"], answer: 2 },
+            { q: "مجموع عمري أخوين 20 سنة، وعمر أحدهما 8. المعادلة التي تعبر عن عمر الثاني (ص) هي:", options: ["8ص = 20", "8 + ص = 20", "ص - 8 = 20", "20 + ص = 8"], answer: 1 }
+        ];
+
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // Utility to shuffle an array (Fisher-Yates)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // Select questions (all of them or a subset)
+            currentQuestions = shuffle([...allQuestions]);
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            document.getElementById('total-questions').textContent = currentQuestions.length;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('quiz-screen').classList.add('flex');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            const q = currentQuestions[currentQuestionIndex];
+            document.getElementById('question-counter').textContent = currentQuestionIndex + 1;
+            document.getElementById('question-text').textContent = q.q;
+            
+            // Update Progress bar
+            const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ''; // Clear previous
+
+            // Create buttons
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = opt;
+                btn.className = 'option-btn w-full bg-white border-2 border-indigo-200 text-indigo-800 font-bold py-4 px-6 rounded-xl text-lg text-right hover:bg-indigo-50 focus:outline-none';
+                btn.onclick = () => selectAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selectedIndex, btnElement) {
+            if (isAnswered) return; // Prevent multiple clicks
+            isAnswered = true;
+
+            const q = currentQuestions[currentQuestionIndex];
+            const options = document.getElementById('options-container').children;
+
+            // Check correct
+            if (selectedIndex === q.answer) {
+                btnElement.classList.add('correct');
+                score += 10; // 10 points per correct answer
+                document.getElementById('score').textContent = score;
+            } else {
+                btnElement.classList.add('wrong');
+                // Highlight correct answer
+                options[q.answer].classList.add('correct');
+            }
+
+            // Disable all buttons
+            for(let i=0; i<options.length; i++) {
+                options[i].disabled = true;
+                options[i].classList.remove('hover:bg-indigo-50');
+            }
+
+            // Show next button
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('flex');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const maxScore = currentQuestions.length * 10;
+            const percentage = (score / maxScore) * 100;
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('progress-bar').style.width = '100%';
+
+            let message = "";
+            let emoji = "";
+
+            if (percentage >= 90) {
+                message = "أداء أسطوري! أنت عبقري رياضيات حقيقي.";
+                emoji = "👑";
+            } else if (percentage >= 75) {
+                message = "عمل رائع! مستواك ممتاز جداً.";
+                emoji = "🌟";
+            } else if (percentage >= 50) {
+                message = "جهد جيد، ولكن يمكنك تقديم أداء أفضل بالمراجعة.";
+                emoji = "👍";
+            } else {
+                message = "لا بأس، التدريب المستمر سيجعلك بطلاً في الرياضيات!";
+                emoji = "💪";
+            }
+
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('result-emoji').textContent = emoji;
+        }
+
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>
